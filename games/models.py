@@ -20,7 +20,7 @@ class Game(models.Model):
     released_at = models.DateField(auto_now=False, auto_now_add=False)
     pegi = models.PositiveSmallIntegerField(choices=Pegi)
     category = models.ForeignKey(
-        'categories.Category', related_name='game_categories', on_delete=models.Protect
+        'categories.Category', related_name='game_categories', on_delete=models.PROTECT
     )
     platforms = models.ManyToManyField(
         'platforms.Platform', related_name='game_platforms', blank=True
