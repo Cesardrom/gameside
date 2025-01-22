@@ -5,8 +5,8 @@ from .models import Category
 # Register your models here.
 
 
-class CategoryAdmin(admin.ModelAdmin):
-    pass
+class CategorieAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ['name']}
 
 
-admin.site.register(Category, CategoryAdmin)
+admin.site.register(Category, CategorieAdmin)

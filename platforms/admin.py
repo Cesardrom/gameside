@@ -6,7 +6,7 @@ from .models import Platform
 
 
 class PlatformAdmin(admin.ModelAdmin):
-    pass
+    prepopulated_fields = {'slug': ['name']}
 
 
 admin.site.register(Platform, PlatformAdmin)

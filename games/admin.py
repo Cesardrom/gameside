@@ -5,7 +5,7 @@ from .models import Game, Review
 
 # Register your models here.
 class GameAdmin(admin.ModelAdmin):
-    pass
+    prepopulated_fields = {'slug': ['title']}
 
 
 admin.site.register(Game, GameAdmin)
