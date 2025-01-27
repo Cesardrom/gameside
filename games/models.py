@@ -38,7 +38,7 @@ class Game(models.Model):
 class Review(models.Model):
     comment = models.TextField()
     rating = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     game = models.ForeignKey('Game', related_name='game_reviews', on_delete=models.CASCADE)
     user = models.ForeignKey(
@@ -46,4 +46,4 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return f'{self.comment}:{self.rating}'
+        return f'{self.user}:{self.rating}'
