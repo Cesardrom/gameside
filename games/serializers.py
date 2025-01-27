@@ -1,6 +1,7 @@
 from categories.serializers import CategorySerializer
 from platforms.serializers import PlatformSerializer
 from shared.serializers import BaseSerializer
+from users.serializers import UserSerializer
 
 
 class GameSerializer(BaseSerializer):
@@ -12,13 +13,13 @@ class GameSerializer(BaseSerializer):
             'id': instance.pk,
             'title': instance.title,
             'slug': instance.slug,
-            'description': instance.description,
             'cover': self.build_url(instance.cover.url),
-            'price': instance.price,
+            'price': float(instance.price),
             'stock': instance.stock,
             'released_at': instance.released_at.isoformat(),
             'pegi': instance.get_pegi_display(),
-            'platform': PlatformSerializer(
+            'description': instance.description,
+            'platforms': PlatformSerializer(
                 instance.platforms.all(), request=self.request
             ).serialize(),
             'category': CategorySerializer(instance.category, request=self.request).serialize(),
@@ -35,4 +36,7 @@ class ReviewSerializer(BaseSerializer):
             'comment': instance.comment,
             'rating': instance.rating,
             'game': GameSerializer(instance.game, request=self.request).serialize(),
+            'author': UserSerializer(instance.author, request=self.request).serialize(),
+            'created_at': instance.created_at.isoformat(),
+            'updated_at': instance.updated_at.isoformat(),
         }

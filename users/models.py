@@ -11,3 +11,6 @@ class Token(models.Model):
     )
     key = models.UUIDField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username
