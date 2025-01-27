@@ -17,5 +17,7 @@ class GameSerializer(BaseSerializer):
             'stock': instance.stock,
             'released_at': instance.released_at.isoformat(),
             'pegi': instance.get_pegi_display(),
-            'platforms': PlatformSerializer(instance.platforms.all()),
+            'platform': PlatformSerializer(
+                instance.platforms.all(), request=self.request
+            ).serialize(),
         }
