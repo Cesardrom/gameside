@@ -1,3 +1,4 @@
+from categories.serializers import CategorySerializer
 from platforms.serializers import PlatformSerializer
 from shared.serializers import BaseSerializer
 
@@ -20,4 +21,5 @@ class GameSerializer(BaseSerializer):
             'platform': PlatformSerializer(
                 instance.platforms.all(), request=self.request
             ).serialize(),
+            'categoty': CategorySerializer(instance.category, request=self.request).serialize(),
         }
