@@ -21,7 +21,7 @@ class GameSerializer(BaseSerializer):
             'platform': PlatformSerializer(
                 instance.platforms.all(), request=self.request
             ).serialize(),
-            'categoty': CategorySerializer(instance.category, request=self.request).serialize(),
+            'category': CategorySerializer(instance.category, request=self.request).serialize(),
         }
 
 

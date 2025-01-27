@@ -40,8 +40,10 @@ class Review(models.Model):
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     game = models.ForeignKey('Game', related_name='game_reviews', on_delete=models.CASCADE)
-    user = models.ForeignKey(
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_reviews'
     )
 

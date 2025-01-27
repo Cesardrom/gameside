@@ -1,7 +1,7 @@
-from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404
 
 from .models import Order
+from .serializers import OrderSerializer
 
 
 def add_order(request):
@@ -10,7 +10,8 @@ def add_order(request):
 
 def order_detail(request, order_pk: int):
     order = get_object_or_404(Order, pk=order_pk)
-    return serialize('json', order)
+    serializer = OrderSerializer(order, request=request)
+    return serializer.json_response()
 
 
 def confirm_order(request, order_pk: int):

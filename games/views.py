@@ -26,6 +26,8 @@ def review_list(request, game_slug: str):
 
 def review_detail(request, review_pk: int):
     review = get_object_or_404(Review, pk=review_pk)
+    serializer = ReviewSerializer(review, request=request)
+    return serializer.json_response()
 
 
 def add_review(request, game_slug: str):
