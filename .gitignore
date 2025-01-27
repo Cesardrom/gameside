@@ -1,5 +1,4 @@
 *.pyc
-db.sqlite3
 .venv
 .mypy_cache
 db.sqlite3
