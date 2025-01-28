@@ -21,7 +21,11 @@ def game_list(request):
 @csrf_exempt
 @require_GET
 def game_detail(request, game_slug: str):
-    game = get_object_or_404(Game, slug=game_slug)
+    try:
+        game = Game.objects.get(slug=game_slug)
+    except Game.DoesNotExist:
+        return JsonResponse({'error': 'Game not found'}, status=404)
+
     serializer = GameSerializer(game, request=request)
     return serializer.json_response()
 

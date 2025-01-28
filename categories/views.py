@@ -1,4 +1,4 @@
-from django.shortcuts import get_list_or_404, get_object_or_404
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
@@ -10,7 +10,7 @@ from .serializers import CategorySerializer
 @csrf_exempt
 @require_GET
 def category_list(request):
-    categories = get_list_or_404(Category)
+    categories = Category.objects.all()
     serializer = CategorySerializer(categories, request=request)
     return serializer.json_response()
 
@@ -18,6 +18,10 @@ def category_list(request):
 @csrf_exempt
 @require_GET
 def category_detail(request, category_slug):
-    category = get_object_or_404(Category, slug=category_slug)
+    try:
+        category = Category.objects.get(slug=category_slug)
+    except Category.DoesNotExist:
+        return JsonResponse({'error': 'Category not found'}, status=404)
+
     serializer = CategorySerializer(category, request=request)
     return serializer.json_response()
