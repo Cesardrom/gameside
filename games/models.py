@@ -15,13 +15,15 @@ class Game(models.Model):
     title = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
-    cover = models.ImageField(blank=True, null=True, upload_to='cache', default='cache/nocover.png')
+    cover = models.ImageField(
+        blank=True, null=True, upload_to='covers', default='covers/default.jpg'
+    )
     price = models.DecimalField(max_digits=6, decimal_places=2)
     stock = models.PositiveIntegerField()
     released_at = models.DateField(auto_now=False, auto_now_add=False)
     pegi = models.PositiveSmallIntegerField(choices=Pegi)
     category = models.ForeignKey(
-        'categories.Category', related_name='game_categories', on_delete=models.PROTECT
+        'categories.Category', related_name='game_categories', on_delete=models.SET_NULL, null=True
     )
     platforms = models.ManyToManyField(
         'platforms.Platform', related_name='game_platforms', blank=True
@@ -42,7 +44,7 @@ class Review(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    game = models.ForeignKey('Game', related_name='game_reviews', on_delete=models.CASCADE)
+    game = models.ForeignKey('Game', related_name='reviews', on_delete=models.CASCADE)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_reviews'
     )

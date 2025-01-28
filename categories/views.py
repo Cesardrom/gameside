@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+
+from shared.decorators import required_method
 
 from .models import Category
 from .serializers import CategorySerializer
@@ -8,7 +9,7 @@ from .serializers import CategorySerializer
 
 # Create your views here.
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def category_list(request):
     categories = Category.objects.all()
     serializer = CategorySerializer(categories, request=request)
@@ -16,7 +17,7 @@ def category_list(request):
 
 
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def category_detail(request, category_slug):
     try:
         category = Category.objects.get(slug=category_slug)

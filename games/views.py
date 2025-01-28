@@ -1,17 +1,17 @@
 from django.http import JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET, require_POST
 
-from shared.decorators import token_exists
+from shared.decorators import load_json_body, required_method, token_exists
 
 from .models import Game, Review
 from .serializers import GameSerializer, ReviewSerializer
 
-
 # Create your views here.
+
+
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def game_list(request):
     games = Game.objects.all()
     serializer = GameSerializer(games, request=request)
@@ -19,7 +19,7 @@ def game_list(request):
 
 
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def game_detail(request, game_slug: str):
     try:
         game = Game.objects.get(slug=game_slug)
@@ -31,7 +31,7 @@ def game_detail(request, game_slug: str):
 
 
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def review_list(request, game_slug: str):
     game = get_object_or_404(Game, slug=game_slug)
     reviews = get_list_or_404(Review, game=game)
@@ -40,7 +40,7 @@ def review_list(request, game_slug: str):
 
 
 @csrf_exempt
-@require_GET
+@required_method('GET')
 def review_detail(request, review_pk: int):
     review = get_object_or_404(Review, pk=review_pk)
     serializer = ReviewSerializer(review, request=request)
@@ -48,13 +48,14 @@ def review_detail(request, review_pk: int):
 
 
 @csrf_exempt
-@require_POST
+@required_method('POST')
+@load_json_body
 @token_exists
 def add_review(request, game_slug: str):
     game = Game.objects.get(slug=game_slug)
     review = Review.objects.create(
-        rating=request.json_post['rating'],
-        comment=request.json_post['comment'],
+        rating=request.json_body['rating'],
+        comment=request.json_body['comment'],
         author=request.user,
         game=game,
     )
