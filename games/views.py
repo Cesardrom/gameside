@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
-from shared.decorators import load_json_body, required_method, token_exists
+from shared.decorators import load_json_body, required_fields, required_method, token_exists
 
 from .models import Game, Review
 from .serializers import GameSerializer, ReviewSerializer
@@ -50,6 +50,7 @@ def review_detail(request, review_pk: int):
 @csrf_exempt
 @required_method('POST')
 @load_json_body
+@required_fields('token', 'rating', 'comment', model=Review)
 @token_exists
 def add_review(request, game_slug: str):
     game = Game.objects.get(slug=game_slug)

@@ -47,11 +47,9 @@ def required_fields(*fields, model):
     def decorator(func):
         def wrapper(request, *args, **kwargs):
             json_body = json.loads(request.body)
-            try:
-                for field in fields:
-                    field = model.objects.get(key=json_body[field])
-            except:
-                return JsonResponse({'error': 'Missing required fields'}, status=400)
+            for field in fields:
+                if field not in json_body:
+                    return JsonResponse({'error': 'Missing required fields'}, status=400)
             return func(request, *args, **kwargs)
 
         return wrapper
