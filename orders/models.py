@@ -23,3 +23,10 @@ class Order(models.Model):
 
     def __str__(self):
         return f'{self.user} Status:{self.status}'
+
+    @property
+    def price(self):
+        total = 0
+        for game in self.games.all():
+            total += game.price
+        return float(total)

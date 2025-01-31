@@ -1,12 +1,11 @@
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
 from games.serializers import GameSerializer
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 from users.models import Token
 
-from .helpers import order_validator
+from .decorators import verify_order, verify_status, verify_user
 from .models import Order
 from .serializers import OrderSerializer
 
@@ -28,8 +27,10 @@ def add_order(request):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_order
+@verify_user
 def order_detail(request, order_pk: int):
-    order = get_object_or_404(Order, pk=order_pk)
+    order = Order.objects.get(pk=order_pk)
     serializer = OrderSerializer(order, request=request)
     return serializer.json_response()
 
@@ -39,8 +40,10 @@ def order_detail(request, order_pk: int):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_order
+@verify_user
 def order_game_list(request, order_pk: int):
-    order = order_validator(order_pk)
+    order = Order.objects.get(pk=order_pk)
     if order:
         if order.user.pk == request.user.pk:
             games = order.games.all()
@@ -54,6 +57,8 @@ def order_game_list(request, order_pk: int):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_order
+@verify_user
 def add_game_to_order(request, order_pk: int, game_slug: str):
     pass
 
@@ -63,8 +68,16 @@ def add_game_to_order(request, order_pk: int, game_slug: str):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_user
+@verify_order
+@verify_status('confirmed')
 def confirm_order(request, order_pk: int):
-    pass
+    token = Token.objects.get(key=request.json_body['token'])
+    user = token.user
+    order = Order.objects.get(user=user, status=1)
+    order.status = 2
+    order.save()
+    return JsonResponse({'status': order.get_status_display()})
 
 
 @csrf_exempt
@@ -72,8 +85,20 @@ def confirm_order(request, order_pk: int):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_user
+@verify_order
+@verify_status('cancelled')
 def cancel_order(request, order_pk: int):
-    pass
+    token = Token.objects.get(key=request.json_body['token'])
+    user = token.user
+    order = Order.objects.get(user=user)
+    order.status = -1
+    games = order.games.all()
+    for game in games:
+        game.stock += 1
+        game.save()
+    order.save()
+    return JsonResponse({'status': order.get_status_display()})
 
 
 @csrf_exempt
@@ -81,5 +106,7 @@ def cancel_order(request, order_pk: int):
 @load_json_body
 @required_fields('token', model=Order)
 @verify_token
+@verify_order
+@verify_status('paid')
 def pay_order(request, order_pk: int):
     pass
