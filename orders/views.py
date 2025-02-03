@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import re
+
 from games.serializers import GameSerializer
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 from users.models import Token
@@ -8,6 +8,7 @@ from users.models import Token
 from .decorators import verify_order, verify_status, verify_user
 from .models import Order
 from .serializers import OrderSerializer
+from .validators import validate_card_data
 
 
 @csrf_exempt
@@ -71,7 +72,7 @@ def add_game_to_order(request, order_pk: int, game_slug: str):
 @verify_user
 @verify_order
 @verify_status('confirmed')
-def confirm_order(request, order_pk: int):
+def confirm_order(request, order):
     token = Token.objects.get(key=request.json_body['token'])
     user = token.user
     order = Order.objects.get(user=user, status=1)
@@ -101,18 +102,21 @@ def cancel_order(request, order_pk: int):
 @csrf_exempt
 @required_method('POST')
 @load_json_body
-@required_fields('token', model=Order)
+@required_fields('token', 'card-number', 'exp-date', 'cvc', model=Order)
 @verify_token
 @verify_order
-@verify_status('paid')
 def pay_order(request, order_pk: int):
-    CARD_NUMBER_PATTERN=re.compile(r'^\d{4}-\d{4}-\d{4}-\d{4}$')
-    EXP_DATE_PATTERN=re.compile(r'^(0[1-9]|1[0-2])\/|d{4}$')
-    CVC_PATTERN= re.compile(r'^\d{3}$')
-    
-    card_number=request.POST.get('card_number')
-    exp_date=request.POST.get('exp_date')
-    cvc=request.POST.get('cvc')
+    card_number = request.POST.get('card_number')
+    exp_date = request.POST.get('exp_date')
+    cvc = request.POST.get('cvc')
 
-    if not CARD_NUMBER_PATTERN.match(card_number):
-        return JsonResponse({'error':''})
+    validation_error = validate_card_data(card_number, exp_date, cvc)
+    if validation_error:
+        return JsonResponse(validation_error, status=400)
+
+    order = request.order
+    if order.status != 'initiated':
+        return JsonResponse({'error': 'Orders can only be paid when initiated'}, status=400)
+
+    game_keys = [game.key for game in order.games.all()]
+    return JsonResponse({'status': order.get_status_display(), 'keys': game_keys})

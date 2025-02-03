@@ -36,10 +36,18 @@ def required_method(method_type):
 def load_json_body(func):
     def wrapper(request, *args, **kwargs):
         try:
-            json_body = json.loads(request.body)
-            request.json_body = json_body
-        except:
+            # Verifica si el cuerpo de la solicitud está vacío
+            if not request.body:
+                return JsonResponse({'error': 'Missing request body'}, status=400)
+
+            # Intenta cargar el cuerpo como JSON
+            request.json_body = json.loads(request.body)
+        except json.decoder.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON body'}, status=400)
+        except Exception as e:
+            # Esto capturará otros posibles errores
+            return JsonResponse({'error': f'Unexpected error: {str(e)}'}, status=500)
+
         return func(request, *args, **kwargs)
 
     return wrapper
