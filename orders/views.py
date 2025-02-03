@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
+import re
 from games.serializers import GameSerializer
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 from users.models import Token
@@ -93,10 +93,7 @@ def cancel_order(request, order_pk: int):
     user = token.user
     order = Order.objects.get(user=user)
     order.status = -1
-    games = order.games.all()
-    for game in games:
-        game.stock += 1
-        game.save()
+    order.increase_stock()
     order.save()
     return JsonResponse({'status': order.get_status_display()})
 
@@ -109,4 +106,13 @@ def cancel_order(request, order_pk: int):
 @verify_order
 @verify_status('paid')
 def pay_order(request, order_pk: int):
-    pass
+    CARD_NUMBER_PATTERN=re.compile(r'^\d{4}-\d{4}-\d{4}-\d{4}$')
+    EXP_DATE_PATTERN=re.compile(r'^(0[1-9]|1[0-2])\/|d{4}$')
+    CVC_PATTERN= re.compile(r'^\d{3}$')
+    
+    card_number=request.POST.get('card_number')
+    exp_date=request.POST.get('exp_date')
+    cvc=request.POST.get('cvc')
+
+    if not CARD_NUMBER_PATTERN.match(card_number):
+        return JsonResponse({'error':''})

@@ -30,3 +30,13 @@ class Order(models.Model):
         for game in self.games.all():
             total += game.price
         return float(total)
+    
+    def increase_stock(self):
+        for game in self.games.all():
+            game.stock += 1
+            game.save()
+
+    def decrease_stock(self):
+        for game in self.games.all():
+            game.stock -= 1
+            game.save()
