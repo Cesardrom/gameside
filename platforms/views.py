@@ -1,12 +1,10 @@
-from django.http import JsonResponse
-
 from shared.decorators import required_method
 
+from .decorators import verify_platform
 from .models import Platform
 from .serializers import PlatformSerializer
 
 
-# Create your views here.
 @required_method('GET')
 def platform_list(request):
     platforms = Platform.objects.all()
@@ -15,10 +13,7 @@ def platform_list(request):
 
 
 @required_method('GET')
+@verify_platform
 def platform_detail(request, platform_slug):
-    try:
-        platform = Platform.objects.get(slug=platform_slug)
-    except Platform.DoesNotExist:
-        return JsonResponse({'error': 'Platform not found'}, status=404)
-    serializer = PlatformSerializer(platform, request=request)
+    serializer = PlatformSerializer(request.platform, request=request)
     return serializer.json_response()

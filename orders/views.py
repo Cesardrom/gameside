@@ -41,11 +41,9 @@ def order_detail(request, order_pk: int):
 @verify_order
 @verify_user
 def order_game_list(request, order_pk: int):
-    if request.order:
-        if request.order.user.pk == request.user.pk:
-            games = request.order.games.all()
-            serializer = GameSerializer(games, request=request)
-            return serializer.json_response()
+    games = request.order.games.all()
+    serializer = GameSerializer(games, request=request)
+    return serializer.json_response()
 
 
 @csrf_exempt
