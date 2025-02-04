@@ -1,24 +1,14 @@
 from django.http import JsonResponse
-from django.shortcuts import get_list_or_404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
 from categories.models import Category
 from platforms.models import Platform
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 
-from .helpers import game_validator
+from .decorators import verify_game
+from .helpers import validate_rating
 from .models import Game, Review
 from .serializers import GameSerializer, ReviewSerializer
-
-# Create your views here.
-
-
-""" @csrf_exempt
-@required_method('GET')
-def game_list(request):
-    games = Game.objects.all()
-    serializer = GameSerializer(games, request=request)
-    return serializer.json_response() """
 
 
 @csrf_exempt
@@ -26,9 +16,7 @@ def game_list(request):
 def game_list(request):
     if category_slug := request.GET.get('category'):
         category = Category.objects.get(slug=category_slug)
-        print(category.pk)
         games = Game.objects.filter(category=category.pk)
-        print(games)
     elif platform_slug := request.GET.get('platform'):
         platform = Platform.objects.get(slug=platform_slug)
         games = Game.objects.filter(platforms=platform.pk)
@@ -46,19 +34,17 @@ def game_list(request):
 
 @csrf_exempt
 @required_method('GET')
+@verify_game
 def game_detail(request, game_slug: str):
-    game = game_validator(game_slug)
-    if game:
-        serializer = GameSerializer(game, request=request)
-        return serializer.json_response()
-    return JsonResponse({'error': 'Game not found'}, status=404)
+    serializer = GameSerializer(request.game, request=request)
+    return serializer.json_response()
 
 
 @csrf_exempt
 @required_method('GET')
+@verify_game
 def review_list(request, game_slug: str):
-    game = get_object_or_404(Game, slug=game_slug)
-    reviews = get_list_or_404(Review, game=game)
+    reviews = Review.objects.filter(game=request.game)
     serializer = ReviewSerializer(reviews, request=request)
     return serializer.json_response()
 
@@ -66,7 +52,7 @@ def review_list(request, game_slug: str):
 @csrf_exempt
 @required_method('GET')
 def review_detail(request, review_pk: int):
-    review = get_object_or_404(Review, pk=review_pk)
+    review = Review.objects.get(pk=review_pk)
     serializer = ReviewSerializer(review, request=request)
     return serializer.json_response()
 
@@ -74,18 +60,14 @@ def review_detail(request, review_pk: int):
 @csrf_exempt
 @required_method('POST')
 @load_json_body
-@required_fields('token', 'rating', 'comment', model=Review)
+@required_fields('rating', 'comment', model=Review)
 @verify_token
+@verify_game
 def add_review(request, game_slug: str):
-    game = game_validator(game_slug)
-    if game:
-        rating = request.json_body['rating']
+    if rating := validate_rating(request):
         comment = request.json_body['comment']
-        author = request.user
-        game = game
-        if 0 < rating <= 5:
-            review = Review.objects.create(rating=rating, author=author, comment=comment, game=game)
-            return JsonResponse({'id': review.pk})
-        else:
-            return JsonResponse({'error': 'Rating is out of range'}, status=400)
-    return JsonResponse({'error': 'Game not found'}, status=404)
+        review = Review.objects.create(
+            rating=rating, author=request.user, comment=comment, game=request.game
+        )
+        return JsonResponse({'id': review.pk})
+    return JsonResponse({'error': 'Rating is out of range'}, status=400)

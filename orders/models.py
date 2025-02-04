@@ -3,6 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from games.models import Game
+
 
 # Create your models here.
 class Order(models.Model):
@@ -43,4 +45,9 @@ class Order(models.Model):
 
     def update_status(self, status):
         self.status = status
+        self.save()
+
+    def add(self, game_slug):
+        game = Game.objects.get(slug=game_slug)
+        self.games.add(game)
         self.save()

@@ -1,8 +1,8 @@
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from shared.decorators import required_method
 
+from .decorators import verify_category
 from .models import Category
 from .serializers import CategorySerializer
 
@@ -18,11 +18,7 @@ def category_list(request):
 
 @csrf_exempt
 @required_method('GET')
+@verify_category
 def category_detail(request, category_slug):
-    try:
-        category = Category.objects.get(slug=category_slug)
-    except Category.DoesNotExist:
-        return JsonResponse({'error': 'Category not found'}, status=404)
-
-    serializer = CategorySerializer(category, request=request)
+    serializer = CategorySerializer(request.category, request=request)
     return serializer.json_response()

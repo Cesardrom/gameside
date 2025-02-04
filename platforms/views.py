@@ -1,5 +1,4 @@
 from django.http import JsonResponse
-from django.shortcuts import get_list_or_404
 
 from shared.decorators import required_method
 
@@ -10,7 +9,7 @@ from .serializers import PlatformSerializer
 # Create your views here.
 @required_method('GET')
 def platform_list(request):
-    platforms = get_list_or_404(Platform)
+    platforms = Platform.objects.all()
     serializer = PlatformSerializer(platforms, request=request)
     return serializer.json_response()
 

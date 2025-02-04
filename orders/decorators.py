@@ -20,6 +20,7 @@ def verify_order(func):
     def wrapper(request, order_pk, *args, **kwargs):
         try:
             order = Order.objects.get(pk=order_pk)
+            request.order = order
         except Order.DoesNotExist:
             return JsonResponse({'error': 'Order not found'}, status=404)
         return func(request, order_pk, *args, **kwargs)
@@ -52,10 +53,11 @@ def verify_confirmed(func):
     return wrapper
 
 
-def verify_game(func):
+def verify_game_in_order(func):
     def wrapper(request, order_pk, game_slug, *args, **kwargs):
         try:
             game = Game.objects.get(slug=game_slug)
+            request.game = game
         except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
         return func(request, order_pk, game_slug, *args, **kwargs)
