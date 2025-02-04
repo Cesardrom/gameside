@@ -13,8 +13,7 @@ def validate_card_data(card_number, exp_date, cvc):
         return {'error': 'Invalid expiration date'}
     if not CVC_PATTERN.match(cvc):
         return {'error': 'Invalid CVC'}
-    # Validar que la fecha de expiración no esté en el pasado
     month, year = map(int, exp_date.split('/'))
     if datetime(year, month, 1) < datetime.now():
-        return {'error': 'Card expiration date is in the past'}
+        return {'error': 'Card expired'}
     return None

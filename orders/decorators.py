@@ -1,5 +1,7 @@
 from django.http import JsonResponse
 
+from games.models import Game
+
 from .models import Order
 
 
@@ -38,3 +40,24 @@ def verify_status(status):
         return wrapper
 
     return function
+
+
+def verify_confirmed(func):
+    def wrapper(request, order_pk, *args, **kwargs):
+        order = Order.objects.get(pk=order_pk)
+        if order.status != 2:
+            return JsonResponse({'error': 'Orders can only be paid when confirmed'}, status=400)
+        return func(request, order_pk, *args, **kwargs)
+
+    return wrapper
+
+
+def verify_game(func):
+    def wrapper(request, order_pk, game_slug, *args, **kwargs):
+        try:
+            game = Game.objects.get(slug=game_slug)
+        except Game.DoesNotExist:
+            return JsonResponse({'error': 'Game not found'}, status=404)
+        return func(request, order_pk, game_slug, *args, **kwargs)
+
+    return wrapper

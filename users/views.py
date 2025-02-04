@@ -9,8 +9,8 @@ from .models import Token
 
 @csrf_exempt
 @required_method('POST')
-@required_fields('username', 'password', model=Token)
 @load_json_body
+@required_fields('username', 'password', model=Token)
 def auth(request):
     username = request.json_body['username']
     password = request.json_body['password']
