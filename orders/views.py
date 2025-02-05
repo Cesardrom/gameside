@@ -5,6 +5,7 @@ from games.serializers import GameSerializer
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 
 from .decorators import (
+    validate_credit_card,
     verify_confirmed,
     verify_game_in_order,
     verify_order,
@@ -13,7 +14,6 @@ from .decorators import (
 )
 from .models import Order
 from .serializers import OrderSerializer
-from .validators import validate_card_data
 
 
 @csrf_exempt
@@ -88,14 +88,8 @@ def cancel_order(request, order_pk: int):
 @verify_order
 @verify_user
 @verify_confirmed
+@validate_credit_card
 def pay_order(request, order_pk: int):
-    card_number = request.json_body['card-number']
-    exp_date = request.json_body['exp-date']
-    cvc = request.json_body['cvc']
-
-    validation_error = validate_card_data(card_number, exp_date, cvc)
-    if validation_error:
-        return JsonResponse(validation_error, status=400)
     request.order.update_status(3)
     game_keys = [game.key for game in request.order.games.all()]
     return JsonResponse({'status': request.order.get_status_display(), 'keys': game_keys})

@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+
 from django.http import JsonResponse
 
 from games.models import Game
@@ -61,5 +64,28 @@ def verify_game_in_order(func):
         except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
         return func(request, order_pk, game_slug, *args, **kwargs)
+
+    return wrapper
+
+
+def validate_credit_card(func):
+    def wrapper(request, order_pk, *args, **kwargs):
+        CARD_NUMBER_PATTERN = re.compile(r'^\d{4}-\d{4}-\d{4}-\d{4}$')
+        EXP_DATE_PATTERN = re.compile(r'^(0[1-9]|1[0-2])\/\d{4}$')
+        CVC_PATTERN = re.compile(r'^\d{3}$')
+        card_number = request.json_body['card-number']
+        exp_date = request.json_body['exp-date']
+        cvc = request.json_body['cvc']
+        if not CARD_NUMBER_PATTERN.match(card_number):
+            return JsonResponse({'error': 'Invalid card number'}, status=400)
+        if not EXP_DATE_PATTERN.match(exp_date):
+            return JsonResponse({'error': 'Invalid expiration date'}, status=400)
+        if not CVC_PATTERN.match(cvc):
+            return JsonResponse({'error': 'Invalid CVC'}, status=400)
+        card_exp_date = datetime.strptime(exp_date, '%m/%Y')
+        current_date = datetime.now()
+        if card_exp_date < current_date:
+            return JsonResponse({'error': 'Card expired'}, status=400)
+        return func(request, order_pk, *args, **kwargs)
 
     return wrapper
