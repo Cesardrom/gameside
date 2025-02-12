@@ -5,7 +5,7 @@ from categories.models import Category
 from platforms.models import Platform
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 
-from .decorators import verify_game
+from .decorators import review_not_found, verify_game
 from .helpers import validate_rating
 from .models import Game, Review
 from .serializers import GameSerializer, ReviewSerializer
@@ -35,7 +35,7 @@ def game_list(request):
 @csrf_exempt
 @required_method('GET')
 @verify_game
-def game_detail(request, game_slug: str):
+def game_detail(request, game):
     serializer = GameSerializer(request.game, request=request)
     return serializer.json_response()
 
@@ -51,6 +51,7 @@ def review_list(request, game_slug: str):
 
 @csrf_exempt
 @required_method('GET')
+@review_not_found
 def review_detail(request, review_pk: int):
     review = Review.objects.get(pk=review_pk)
     serializer = ReviewSerializer(review, request=request)

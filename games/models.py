@@ -50,4 +50,4 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return f'{self.user}:{self.rating}'
+        return f'{self.author}:{self.rating}'

@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from games.models import Game
 from games.serializers import GameSerializer
 from shared.decorators import load_json_body, required_fields, required_method, verify_token
 
@@ -17,7 +18,7 @@ from .serializers import OrderSerializer
 
 
 @csrf_exempt
-@required_method('GET')
+@required_method('POST')
 @verify_token
 def add_order(request):
     user = request.user
@@ -47,36 +48,36 @@ def order_game_list(request, order_pk: int):
 
 
 @csrf_exempt
-@required_method('GET')
+@required_method('POST')
+@load_json_body
+@required_fields('game-slug', model=Game)
 @verify_token
 @verify_order
 @verify_game_in_order
 @verify_user
-def add_game_to_order(request, order_pk: int, game_slug: str):
-    request.order.add(game_slug)
+def add_game_to_order(request, order_pk: int):
+    game = request.game
+    request.order.add(game)
+    request.order.decrease_stock()
     return JsonResponse({'num-games-in-order': request.order.games.count()})
 
 
 @csrf_exempt
-@required_method('GET')
+@required_method('POST')
+@load_json_body
+@required_fields('status', model=Order)
 @verify_token
 @verify_order
 @verify_user
 @verify_status('confirmed')
-def confirm_order(request, order):
-    request.order.update_status(2)
-    return JsonResponse({'status': request.order.get_status_display()})
-
-
-@csrf_exempt
-@required_method('GET')
-@verify_token
-@verify_order
-@verify_user
-@verify_status('cancelled')
-def cancel_order(request, order_pk: int):
-    request.order.update_status(-1)
-    request.order.increase_stock()
+def change_order_status(request, order):
+    VALID_STATUS = [2, -1]
+    status = request.json_body['status']
+    if status not in VALID_STATUS:
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+    if status == -1:
+        request.order.increase_stock()
+    request.order.update_status(status)
     return JsonResponse({'status': request.order.get_status_display()})
 
 
@@ -91,5 +92,4 @@ def cancel_order(request, order_pk: int):
 @validate_credit_card
 def pay_order(request, order_pk: int):
     request.order.update_status(3)
-    game_keys = [game.key for game in request.order.games.all()]
-    return JsonResponse({'status': request.order.get_status_display(), 'keys': game_keys})
+    return JsonResponse({'status': request.order.get_status_display(), 'keys': request.order.key})

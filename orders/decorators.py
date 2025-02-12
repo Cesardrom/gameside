@@ -37,7 +37,7 @@ def verify_status(status):
             order = Order.objects.get(pk=order_pk)
             if order.status != 1:
                 return JsonResponse(
-                    {'error': f'Orders can only be {status.lower()} when initiated'}, status=400
+                    {'error': 'Orders can only be confirmed/cancelled when initiated'}, status=400
                 )
             return func(request, order_pk, *args, **kwargs)
 
@@ -57,13 +57,14 @@ def verify_confirmed(func):
 
 
 def verify_game_in_order(func):
-    def wrapper(request, order_pk, game_slug, *args, **kwargs):
+    def wrapper(request, order_pk, *args, **kwargs):
+        game_slug = request.json_body['game-slug']
         try:
             game = Game.objects.get(slug=game_slug)
             request.game = game
         except Game.DoesNotExist:
             return JsonResponse({'error': 'Game not found'}, status=404)
-        return func(request, order_pk, game_slug, *args, **kwargs)
+        return func(request, order_pk, *args, **kwargs)
 
     return wrapper
 
