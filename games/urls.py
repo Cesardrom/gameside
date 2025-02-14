@@ -1,7 +1,9 @@
-from django.urls import path
+from django.urls import path, register_converter
 
 from . import views
+from .converters import GameConverter
 
+register_converter(GameConverter, 'game')
 app_name = 'games'
 
 urlpatterns = [

@@ -56,8 +56,7 @@ def order_game_list(request, order_pk: int):
 @verify_game_in_order
 @verify_user
 def add_game_to_order(request, order_pk: int):
-    game = request.game
-    request.order.add(game)
+    request.order.add(request.game)
     request.order.decrease_stock()
     return JsonResponse({'num-games-in-order': request.order.games.count()})
 
@@ -71,11 +70,11 @@ def add_game_to_order(request, order_pk: int):
 @verify_user
 @verify_status('confirmed')
 def change_order_status(request, order):
-    VALID_STATUS = [2, -1]
+    VALID_STATUS = [Order.Status.CANCELLED, Order.Status.CONFIRMED]
     status = request.json_body['status']
     if status not in VALID_STATUS:
         return JsonResponse({'error': 'Invalid status'}, status=400)
-    if status == -1:
+    if status == Order.Status.CANCELLED:
         request.order.increase_stock()
     request.order.update_status(status)
     return JsonResponse({'status': request.order.get_status_display()})
@@ -91,5 +90,5 @@ def change_order_status(request, order):
 @verify_confirmed
 @validate_credit_card
 def pay_order(request, order_pk: int):
-    request.order.update_status(3)
+    request.order.update_status(Order.Status.PAID)
     return JsonResponse({'status': request.order.get_status_display(), 'keys': request.order.key})
